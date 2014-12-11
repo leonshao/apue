@@ -43,3 +43,18 @@ pid_t lock_test(int fd, int type, off_t offset, int whence, off_t len)
 
 	return lock.l_pid;	/* true, return pid of lock owner */
 }
+
+/*
+ * Lock the whole opened file
+ */
+int lockfile(int fd)
+{
+	struct flock fl;
+
+	fl.l_type	= F_WRLCK;		/* Write lock.	*/
+	fl.l_start	= 0;			/* Begins.  */
+	fl.l_whence	= SEEK_SET;		/* Seek from beginning of file.  */
+	fl.l_len	= 0;			/* Lock until EOF */
+
+	return fcntl(fd, F_SETLK, &fl);
+}
