@@ -12,6 +12,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>	/* for waitpid */
+#include <sys/stat.h>
+#include <errno.h>
 
 #define	MAXLINE 	4096	/* max line length */
 
@@ -21,6 +25,16 @@
  * Error parts
  */
 void err_sys(const char *, ...);
+void err_quit(const char *, ...);
+
+/*
+ * File I/O parts
+ */
+void set_fl(int fd, int flags);
+void clr_fl(int fd, int flags);
+
+ssize_t readn(int fd, void *ptr, size_t n);
+ssize_t writen(int fd, void *ptr, size_t n);
 
 /*
  * Lock parts
