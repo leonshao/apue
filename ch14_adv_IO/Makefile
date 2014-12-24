@@ -11,9 +11,12 @@ OBJ = ../obj/lock.o ../obj/file_io.o ../obj/err.o
 #mod_list: mod_list.c $(OBJ) ../include/apue.h
 #	gcc -Wall -o mod_list -I../include mod_list.c $(OBJ)
 
-cp_mmap: cp_mmap.c $(OBJ) ../include/apue.h
-	gcc -Wall -o cp_mmap -I../include cp_mmap.c $(OBJ)
+#cp_mmap: cp_mmap.c $(OBJ) ../include/apue.h
+#	gcc -Wall -o cp_mmap -I../include cp_mmap.c $(OBJ)
+
+lock_starve: lock_starve.c $(OBJ) ../include/apue.h
+	gcc -Wall -g -o lock_starve -I../include lock_starve.c $(OBJ)
 
 .PHONY: clean
 clean:
-	-rm -f dead_lock nonblk_write mandatory_lock mod_list cp_mmap
+	-rm -f dead_lock nonblk_write mandatory_lock mod_list cp_mmap lock_starve
