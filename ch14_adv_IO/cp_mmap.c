@@ -44,6 +44,12 @@ int main(int argc, char *argv[])
 			MAP_SHARED, fdout, 0)) == MAP_FAILED)
 		err_sys("mmap error for output");
 
+	/*
+	 * after mmap succeeds, memcpy works even fdin is closed,
+	 */
+//	close(fdin);
+//	printf("src: %p, dst: %p\n", src, dst);
+
 	memcpy(dst, src, statbuf.st_size);	/* does the file copy */
 
 	exit(0);

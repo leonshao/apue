@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	 * PAGER is executed by shell as below:
 	 * sh -c ${PAGER:-more}
 	 */
-	if((fpout = popen(PAGER, "w")) == NULL)
+	if((fpout = my_popen(PAGER, "w")) == NULL)
 		err_sys("popen error");
 
 	/*
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 	/*
 	 * parent waits until child finishes
 	 */
-	if(pclose(fpout) < 0)
+	if(my_pclose(fpout) < 0)
 		err_sys("pclose error");
 
 	return 0;

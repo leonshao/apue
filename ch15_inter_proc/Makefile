@@ -1,15 +1,12 @@
-OBJ = ../obj/lock.o ../obj/file_io.o ../obj/err.o
+# only change APP for different application
+APP = popen
+BIN_PATH = bin/
+BIN = $(BIN_PATH)$(APP)
+OBJ = ../obj/lock.o ../obj/file_io.o ../obj/err.o ../obj/open_max.o ../obj/my_popen.o
 
-#pipe: pipe.c $(OBJ) ../include/apue.h
-#	gcc -Wall -g -o pipe -I../include pipe.c $(OBJ)
-
-pager: pager.c $(OBJ) ../include/apue.h
-	gcc -Wall -g -o pager -I../include pager.c $(OBJ)
-
-#popen: popen.c $(OBJ) ../include/apue.h
-#	gcc -Wall -g -o popen -I../include popen.c $(OBJ)
-
+$(APP): $(APP).c $(OBJ) ../include/apue.h
+	gcc -Wall -g -o $(BIN) -I../include $(APP).c $(OBJ)
 
 .PHONY: clean
 clean:
-	-rm -f pipe pager popen
+	-rm -f $(BIN_PATH)*
