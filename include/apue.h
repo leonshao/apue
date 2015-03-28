@@ -16,6 +16,7 @@
 #include <sys/wait.h>	/* for waitpid */
 #include <sys/stat.h>
 #include <errno.h>
+#include <signal.h>
 
 #define	MAXLINE 	4096	/* max line length */
 
@@ -25,6 +26,7 @@
  * Error parts
  */
 void err_sys(const char *, ...);
+void err_msg(const char *, ...);
 void err_quit(const char *, ...);
 
 /*
@@ -62,6 +64,21 @@ int lockfile(int fd);
 /*
  * Process sync parts
  */
-void TELL_WAIT();
+void TELL_WAIT(void);
+void TELL_PARENT(pid_t pid);
+void WAIT_PARENT(void);
+void TELL_CHILD(pid_t pid);
+void WAIT_CHILD(void);
+
+/*
+ * Inter process communication parts
+ */
+FILE *my_popen(const char *cmdstring, const char *type);
+int my_pclose(FILE *fp);
+
+/*
+ * OS standard parts
+ */
+long open_max(void);
 
 #endif /* INCLUDE_APUE_H_ */

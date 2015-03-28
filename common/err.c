@@ -26,6 +26,33 @@ void err_sys(const char *fmt, ...)
 }
 
 /*
+ * Nonfatal error unrelated to a system call
+ * Print a message and return.
+ */
+void err_msg(const char *fmt, ...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	err_doit(0, 0, fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * Fatal error unrelated to a system call.
+ * Print a message and terminate.
+ */
+void err_quit(const char *fmt, ...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	err_doit(0, 0, fmt, ap);
+	va_end(ap);
+	exit(1);
+}
+
+/*
  * Print a message and return to caller.
  * Caller specifies "errnoflag", which decides if to
  * print the error message of errno

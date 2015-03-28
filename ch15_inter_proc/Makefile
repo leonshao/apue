@@ -1,5 +1,5 @@
 # only change APP for different application
-APP = invoke_filter
+APP = add2
 BIN_PATH = bin/
 BIN = $(BIN_PATH)$(APP)
 OBJ = ../obj/lock.o ../obj/file_io.o ../obj/err.o ../obj/open_max.o ../obj/my_popen.o
