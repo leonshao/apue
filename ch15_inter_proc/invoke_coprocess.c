@@ -35,12 +35,14 @@
 #include "apue.h"
 
 /*
- * singnal handler for child exits
+ * singnal handler for child exits or pipe closed
  * parent and child are connected by pipes,
  * once child exists before parent and parent
  * tries to write pipe1, SIGPIPE occurs
  */
 static void sig_pipe(int);
+
+static void sig_child(int);
 
 int main(void)
 {
@@ -50,6 +52,9 @@ int main(void)
 
 	if(signal(SIGPIPE, sig_pipe) == SIG_ERR)
 		err_sys("signal error");
+
+	if(signal(SIGCHLD, sig_child) == SIG_ERR)
+			err_sys("signal error");
 
 	if(pipe(fd1) < 0 || pipe(fd2) < 0)
 		err_sys("pipe error");
@@ -119,5 +124,11 @@ int main(void)
 static void sig_pipe(int signo)
 {
 	printf("SIGPIPE caught\n");
+	exit(1);
+}
+
+static void sig_child(int signo)
+{
+	printf("SIGCHLD caught\n");
 	exit(1);
 }

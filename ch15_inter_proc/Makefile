@@ -1,4 +1,5 @@
 # only change APP for different application
+#APP = invoke_coprocess
 APP = add2
 BIN_PATH = bin/
 BIN = $(BIN_PATH)$(APP)

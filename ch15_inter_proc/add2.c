@@ -7,11 +7,24 @@
 
 #include "apue.h"
 
+static char	*invalid_str = "invalid args\n";
+static char *printf_err = "printf error";
+
+static void add2_rw(void);
+static void add2_fgets(void);
+
 int main(void)
+{
+//	add2_rw();
+	add2_fgets();
+
+	return 0;
+}
+
+static void add2_rw(void)
 {
 	int 	n, int1, int2;
 	char	line[MAXLINE];
-	char	*invalid_str = "invalid args\n";
 
 	while((n = read(STDIN_FILENO, line, MAXLINE)) > 0)
 	{
@@ -30,6 +43,35 @@ int main(void)
 				err_sys("write error");
 		}
 	}
-
-	return 0;
 }
+
+static void add2_fgets(void)
+{
+	int 	int1, int2;
+	char	line[MAXLINE];
+
+	/*
+	 * once stdin and stdout become pipe, they are set to fully buffered
+	 * as default, fgets blocks.
+	 * use setvbuf to set stdin and stdout to line buffer
+	 */
+	if(setvbuf(stdin, NULL, _IOLBF, 0) != 0)
+		err_sys("setvbuf error");
+	if(setvbuf(stdout, NULL, _IOLBF, 0) != 0)
+		err_sys("setvbuf error");
+
+	while(fgets(line, MAXLINE, stdin) != NULL)
+	{
+		if(sscanf(line, "%d%d", &int1, &int2) == 2)	/* should use &int1 */
+		{
+			if(printf("%d\n", int1 + int2) == EOF)
+				err_sys(printf_err);
+		}
+		else
+		{
+			if(printf("%s", invalid_str) == EOF)
+				err_sys(printf_err);
+		}
+	}
+}
+
