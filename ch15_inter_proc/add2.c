@@ -13,10 +13,12 @@ static char *printf_err = "printf error";
 static void add2_rw(void);
 static void add2_fgets(void);
 
-int main(void)
+int main(int argc, char *argv[])
 {
-//	add2_rw();
-	add2_fgets();
+	if(argc < 2)
+		add2_rw();
+	else
+		add2_fgets();
 
 	return 0;
 }
