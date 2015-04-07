@@ -1,18 +1,28 @@
 BIN_PATH = bin
 OBJ_PATH = ../obj
 
-OBJ = ../obj/lock.o ../obj/file_io.o ../obj/err.o ../obj/open_max.o ../obj/my_popen.o
+OBJ = ../obj/lock.o \
+      ../obj/file_io.o \
+      ../obj/err.o \
+      ../obj/open_max.o \
+      ../obj/my_popen.o \
+      ../obj/proc_sync.o
 
-MYOPEN = my_popen.o
+OBJ_OUT = my_popen.o \
+          proc_sync.o
 
 # add APPs for different application
-APP = add2 invoke_coprocess shm
+APP = add2 \
+      invoke_coprocess \
+      shm \
+      mmap \
+      mmap_lock
 
 # needs all, otherwise only one APP is generated
 .PHONY: all
-all: $(MYOPEN) $(APP)
+all: $(OBJ_OUT) $(APP)
 
-$(MYOPEN): %.o: %.c
+$(OBJ_OUT): %.o: %.c
 	gcc -Wall -g -c -I../include $< -o $(OBJ_PATH)/$@
 	
 $(APP):
@@ -26,4 +36,4 @@ clean:
 	-rm -f $(BIN_PATH)/*
 
 cleanobj:
-	-rm -f $(OBJ_PATH)/$(MYOPEN).o
+	-rm -f $(OBJ_PATH)/$(OBJ_OUT).o

@@ -7,30 +7,35 @@
 
 #include "apue.h"
 #include <sys/shm.h>
+#include <sys/mman.h>
 
 /*
  * +--------------------+ high address
  * |	argv, env		|
  * +--------------------+
- * |	stack			| <- 0x7fffad26d30c	(&shmid)
+ * |	stack			| <- 0x7fff80464d74	(&shmid)
  * +--------------------+
  * |	...				|
  * +--------------------+
- * |					| <- 0x7f6beddaf6a0	(shmptr + SHM_SIZE)
+ * |					| <- 0x7f11eb4a26a0 (mmptr + MMAP_SIZE)
+ * |	mmap memory		|
+ * |					| <- 0x7f11eb48a000 (mmptr)
+ * |					|
+ * |					| <- 0x7f11eb4896a0	(shmptr + SHM_SIZE)
  * |	shared memory	|
- * |					| <- 0x7f6bedd97000	(shmptr)
+ * |					| <- 0x7f11eb471000	(shmptr)
  * +--------------------+
  * |	...				|
  * +--------------------+
- * |					| <- 0x15816b0		(ptr)
+ * |					| <- 0xcd06b0		(ptr)
  * |	heap			|
- * |					| <- 0x1569010		(ptr + MALLOC_SIZE)
+ * |					| <- 0xcb8010		(ptr + MALLOC_SIZE)
  * +--------------------+
  * |	...				|
  * +--------------------+
- * |					| <- 0x60bda0		(&array[ARRAY_SIZE])
+ * |					| <- 0x60cdc0		(&array[ARRAY_SIZE])
  * |	.bss			|
- * |					| <- 0x602160		(&array[0])
+ * |					| <- 0x603180		(&array[0])
  * +--------------------+
  * |	.data			|
  * +--------------------+
@@ -42,6 +47,7 @@
 #define ARRAY_SIZE	40000
 #define MALLOC_SIZE	100000
 #define SHM_SIZE	100000
+#define MMAP_SIZE	100000
 #define SHM_MODE	0600	/* user read/write, SHM_R | SHM_W */
 
 char	array[ARRAY_SIZE];	/* uninitialized data = bss */
@@ -49,12 +55,18 @@ char	array[ARRAY_SIZE];	/* uninitialized data = bss */
 int main(void)
 {
 	int		shmid;
-	char	*ptr, *shmptr;
+	char	*mmptr, *ptr, *shmptr;
 
 	/*
 	 * print stack address
 	 */
 	printf("stack address around 0x%lx\n", (unsigned long)&shmid);
+
+	if((mmptr = mmap(0, MMAP_SIZE, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED,
+			-1, 0)) == MAP_FAILED)
+		err_sys("mmap error");
+	printf("mmap memory from 0x%lx to 0x%lx\n",
+			(unsigned long)mmptr, (unsigned long)(mmptr + MMAP_SIZE));
 
 	/*
 	 * print shared memory address
