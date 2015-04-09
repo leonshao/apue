@@ -16,7 +16,8 @@ APP = add2 \
       invoke_coprocess \
       shm \
       mmap \
-      mmap_lock
+      mmap_lock \
+      mmap_shm
 
 # needs all, otherwise only one APP is generated
 .PHONY: all
