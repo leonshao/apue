@@ -12,7 +12,10 @@ OBJ = ../obj/lock.o \
 APP = endian \
       socket_stat \
       gethostname \
-      gethostent
+      gethostent \
+      getprotoent \
+      getservent \
+      getaddrinfo
 
 # needs all, otherwise only one APP is generated
 all: $(APP)
