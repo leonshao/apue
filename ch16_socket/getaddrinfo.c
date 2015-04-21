@@ -116,18 +116,38 @@ void print_protocol(struct addrinfo *aip)
 	printf("\n");
 }
 
+static void init_addrinfo(struct addrinfo *hint)
+{
+	hint->ai_flags 		= AI_V4MAPPED;
+	hint->ai_family		= 0;
+	hint->ai_socktype 	= SOCK_STREAM;
+	hint->ai_protocol 	= 0;
+	hint->ai_addrlen	= 0;
+	hint->ai_canonname	= NULL;
+	hint->ai_addr		= NULL;
+	hint->ai_next		= NULL;
+}
+
 int main(int argc, char *argv[])
 {
+	struct addrinfo hint;
 	struct addrinfo *p_addrlist, *p_ai;
 	int				ret;
 	char			addrbuf[INET_ADDRSTRLEN];
 	const char		*p_sa;
 	struct sockaddr_in	*p_sain;
+	char			*service;
 
-	if(argc != 3)
-		err_quit("usage: %s nodename service", argv[0]);
+	if(argc < 2)
+		err_quit("usage: %s nodename <service>", argv[0]);
+	else if(argc == 2)
+		service = NULL;
+	else
+		service = argv[2];
 
-	if((ret = getaddrinfo(argv[1], argv[2], NULL, &p_addrlist)) != 0)
+	init_addrinfo(&hint);
+
+	if((ret = getaddrinfo(argv[1], service, &hint, &p_addrlist)) != 0)
 		err_quit("getaddrinfo error: %s", gai_strerror(ret));
 
 	for(p_ai = p_addrlist; p_ai != NULL; p_ai = p_ai->ai_next)
@@ -141,8 +161,13 @@ int main(int argc, char *argv[])
 
 		if(p_ai->ai_family == AF_INET)
 		{
+			/*
+			 * convert general socket address to internet IPv4 address
+			 * with port number
+			 */
 			p_sain = (struct sockaddr_in *)p_ai->ai_addr;
 			p_sa = inet_ntop(AF_INET, &p_sain->sin_addr, addrbuf, INET_ADDRSTRLEN);
+
 			printf("address: %s\n", p_sa ? p_sa : "unknown");
 			printf("port: %d\n", ntohs(p_sain->sin_port));
 		}

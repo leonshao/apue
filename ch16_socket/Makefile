@@ -15,7 +15,8 @@ APP = endian \
       gethostent \
       getprotoent \
       getservent \
-      getaddrinfo
+      getaddrinfo \
+      uptime_server
 
 # needs all, otherwise only one APP is generated
 all: $(APP)
