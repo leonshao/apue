@@ -7,17 +7,7 @@
 
 #include "apue.h"
 
-/*
- * HOST_NAME_MAX is always defined in bits/local_lim.h
- */
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 256
-#endif
-
-#define DEFAULT_PORT 36666
 #define QLEN 10
-#define BUFLEN 128
-
 
 static char *get_defaulthost()
 {
@@ -127,12 +117,31 @@ void serv(int sockfd)
 int main(int argc, char *argv[])
 {
 	int 				sockfd, ret;
+	int					port = DEFAULT_PORT;
 	char				*host;
 	struct addrinfo		*p_addrlist = NULL;
 	struct addrinfo		hint;
 	struct sockaddr_in	sa_in;
 
-	host = get_defaulthost();
+	/*
+	 * host got from local, so only accept local request,
+	 * this can be verified by netstat -tlpn, output as below:
+	 *
+	 * Proto Recv-Q Send-Q Local Address           Foreign Address         State
+	 * tcp        0      0 127.0.1.1:36666         0.0.0.0:*               LISTEN
+	 */
+	if(argc == 1)
+	{
+		host = get_defaulthost();
+	}
+	if(argc >= 2)
+	{
+		host = argv[1];
+	}
+	if(argc >= 3)
+	{
+		port = (uint16_t)atoi(argv[2]);
+	}
 
 	init_addrinfo(&hint);
 	if((ret = getaddrinfo(host, NULL, NULL, &p_addrlist)) != 0)
@@ -140,15 +149,26 @@ int main(int argc, char *argv[])
 
 	if(p_addrlist != NULL)
 		memcpy((void *)&sa_in, (void *)p_addrlist->ai_addr, sizeof(sa_in));
+	else
+	{
+		sa_in.sin_family = AF_INET;
+		sa_in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	}
+
 	/*
 	 * Because getaddrinfo without service,
 	 * the port of returned addrinfo is set to zero.
 	 * Need to set an unused port.
 	 */
-	sa_in.sin_port = htons(DEFAULT_PORT);
+	sa_in.sin_port = htons(port);
 
+	/*
+	 * !!!
+	 * pay attention to the alen, do not input by sizeof(struct sockaddr)
+	 * because the struct size depends on the machine archtect
+	 */
 	if((sockfd = init_server(SOCK_STREAM, (struct sockaddr *)&sa_in,
-			sizeof(struct sockaddr), QLEN)) >= 0)
+			INET_ADDRSTRLEN, QLEN)) >= 0)
 	{
 		serv(sockfd);
 		exit(0);
