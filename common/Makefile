@@ -1,6 +1,6 @@
 OBJ_PATH = ../obj
 
-OBJS = err.o lock.o readn_writen.o
+OBJS = err.o lock.o readn_writen.o socket.o
 
 all: $(OBJS)
 

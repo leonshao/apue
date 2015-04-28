@@ -1,7 +1,7 @@
 /*
- * uptime_server.c
+ * uptime_server_fork.c
  *
- *  Created on: 2015年4月21日
+ *  Created on: 2015年4月28日
  *      Author: leon
  */
 
@@ -12,12 +12,12 @@
 void serv(int sockfd)
 {
 	int 				clientfd;
-	FILE				*fp;
-	char				buf[BUFLEN];
 	struct sockaddr_in	client_addr;
 	socklen_t			alen;
 	char				addrbuf[INET_ADDRSTRLEN];
 	const char			*p_sa;
+	pid_t				pid;
+	int					status;
 
 	for(;;)
 	{
@@ -31,20 +31,31 @@ void serv(int sockfd)
 			printf("get connection from: %s:%d\n", p_sa, client_addr.sin_port);
 		}
 
-		if((fp = popen("/usr/bin/uptime", "r")) == NULL)
+		if((pid = fork()) < 0)
 		{
-			snprintf(buf, BUFLEN, "error: %s\n", strerror(errno));
-			send(clientfd, buf, strlen(buf), 0);
+			/*
+			 * once daemonized, no msg is output to console.
+			 * use syslog for ouput log instead
+			 */
+			err_sys("fork error");
 		}
-		else
+		else if(pid == 0)	/* child */
 		{
-			while(fgets(buf, BUFLEN, fp) != NULL)
-				send(clientfd, buf, strlen(buf), 0);
-
-			pclose(fp);
+			if (dup2(clientfd, STDOUT_FILENO) != STDOUT_FILENO ||
+				dup2(clientfd, STDERR_FILENO) != STDERR_FILENO)
+			{
+				err_sys("dup2 error");
+			}
+			close(clientfd);
+			execl("/usr/bin/uptime", "uptime", (char *)0);
+			err_sys("execl error");
 		}
-
-		close(clientfd);
+		else				/* parent */
+		{
+			printf("child pid: %d\n", pid);
+			close(clientfd);
+			waitpid(pid, &status, 0);
+		}
 	}
 }
 

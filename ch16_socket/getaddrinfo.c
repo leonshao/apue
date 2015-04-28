@@ -116,18 +116,6 @@ void print_protocol(struct addrinfo *aip)
 	printf("\n");
 }
 
-static void init_addrinfo(struct addrinfo *hint)
-{
-	hint->ai_flags 		= AI_V4MAPPED;
-	hint->ai_family		= 0;
-	hint->ai_socktype 	= SOCK_STREAM;
-	hint->ai_protocol 	= 0;
-	hint->ai_addrlen	= 0;
-	hint->ai_canonname	= NULL;
-	hint->ai_addr		= NULL;
-	hint->ai_next		= NULL;
-}
-
 int main(int argc, char *argv[])
 {
 	struct addrinfo hint;

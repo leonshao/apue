@@ -6,7 +6,8 @@ OBJ = ../obj/lock.o \
       ../obj/err.o \
       ../obj/open_max.o \
       ../obj/my_popen.o \
-      ../obj/proc_sync.o
+      ../obj/proc_sync.o \
+      ../obj/socket.o
 
 # add APPs for different application
 APP = endian \
@@ -17,7 +18,8 @@ APP = endian \
       getservent \
       getaddrinfo \
       uptime_server \
-      client
+      client \
+      uptime_server_fork
 
 # needs all, otherwise only one APP is generated
 all: $(APP)
