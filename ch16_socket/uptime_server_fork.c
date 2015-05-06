@@ -54,6 +54,13 @@ void serv(int sockfd)
 		{
 			printf("child pid: %d\n", pid);
 			close(clientfd);
+			/*
+			 * pay attention to the waitpid, otherwise, all
+			 * children becomes zombie(defunct).
+			 * for examples:
+			 * leon      4164  4113  0 23:20 pts/0    00:00:00 [uptime] <defunct>
+			 * leon      4172  4113  0 23:21 pts/0    00:00:00 [uptime] <defunct>
+			 */
 			waitpid(pid, &status, 0);
 		}
 	}
@@ -88,7 +95,7 @@ int main(int argc, char *argv[])
 		port = (uint16_t)atoi(argv[2]);
 	}
 
-	init_addrinfo(&hint);
+	init_addrinfo(&hint, SOCK_STREAM);
 	if((ret = getaddrinfo(host, NULL, NULL, &p_addrlist)) != 0)
 		err_quit("getaddrinfo error: %s", gai_strerror(ret));
 

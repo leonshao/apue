@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 		port = (uint16_t)atoi(argv[2]);
 	}
 
-	init_addrinfo(&hint);
+	init_addrinfo(&hint, SOCK_STREAM);
 	if((ret = getaddrinfo(host, NULL, NULL, &p_addrlist)) != 0)
 		err_quit("getaddrinfo error: %s", gai_strerror(ret));
 

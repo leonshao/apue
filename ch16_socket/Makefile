@@ -19,7 +19,9 @@ APP = endian \
       getaddrinfo \
       uptime_server \
       client \
-      uptime_server_fork
+      uptime_server_fork \
+      uptime_server_udp \
+      client_udp
 
 # needs all, otherwise only one APP is generated
 all: $(APP)

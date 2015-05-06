@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
 	/*
 	 * get remote addr from input host or default host
 	 */
-	init_addrinfo(&hint);
-	if((ret = getaddrinfo(host, NULL, NULL, &p_addrlist)) != 0)
+	init_addrinfo(&hint, SOCK_STREAM);
+	if((ret = getaddrinfo(host, NULL, &hint, &p_addrlist)) != 0)
 		err_quit("getaddrinfo error: %s", gai_strerror(ret));
 
 	if(p_addrlist != NULL)
