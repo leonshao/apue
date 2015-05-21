@@ -21,13 +21,14 @@ APP = endian \
       client \
       uptime_server_fork \
       uptime_server_udp \
-      client_udp
+      client_udp \
+      uptime_server_multi_port
 
 # needs all, otherwise only one APP is generated
 all: $(APP)
 
-$(APP):
-	gcc -Wall -g -o $(BIN_PATH)/$@ -I../include $@.c $(OBJ)
+$(APP):%:%.c
+	gcc -Wall -g -o $(BIN_PATH)/$@ -I../include $< $(OBJ)
 
 
 .PHONY: clean

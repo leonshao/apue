@@ -30,11 +30,11 @@ char *get_defaulthost()
 	return host;
 }
 
-void init_addrinfo(struct addrinfo *hint)
+void init_addrinfo(struct addrinfo *hint, int socktype)
 {
 	hint->ai_flags 		= 0;
 	hint->ai_family		= 0;
-	hint->ai_socktype 	= SOCK_STREAM;
+	hint->ai_socktype 	= socktype;
 	hint->ai_protocol 	= 0;
 	hint->ai_addrlen	= 0;
 	hint->ai_canonname	= NULL;
@@ -49,9 +49,15 @@ int init_server(int type, const struct sockaddr *addr, socklen_t alen, int qlen)
 {
 	int sockfd;
 	int err = 0;
+	int reuse = 1;
 
 	if((sockfd = socket(addr->sa_family, type, 0)) < 0)
 		return -1;
+	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+	{
+		err = errno;
+		goto errout;
+	}
 
 	if(bind(sockfd, addr, alen) < 0)
 	{
@@ -59,10 +65,13 @@ int init_server(int type, const struct sockaddr *addr, socklen_t alen, int qlen)
 		goto errout;
 	}
 
-	if(listen(sockfd, qlen) < 0)
+	if(type == SOCK_STREAM)
 	{
-		err = errno;
-		goto errout;
+		if(listen(sockfd, qlen) < 0)
+		{
+			err = errno;
+			goto errout;
+		}
 	}
 
 	return sockfd;
