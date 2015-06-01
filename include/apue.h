@@ -17,6 +17,9 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 #define	MAXLINE 	4096	/* max line length */
 
@@ -71,6 +74,11 @@ void TELL_CHILD(pid_t pid);
 void WAIT_CHILD(void);
 
 /*
+ * Daemon process parts
+ */
+void daemonize(const char *cmd);
+
+/*
  * Inter process communication parts
  */
 FILE *my_popen(const char *cmdstring, const char *type);
@@ -80,5 +88,24 @@ int my_pclose(FILE *fp);
  * OS standard parts
  */
 long open_max(void);
+
+/*
+ * network parts
+ */
+/*
+ * HOST_NAME_MAX is always defined in bits/local_lim.h
+ */
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 	256
+#endif
+
+#define DEFAULT_PORT 	36666
+#define BUFLEN 			128
+
+char *get_defaulthost();
+void init_addrinfo(struct addrinfo *hint, int socktype);
+int init_server(int type, const struct sockaddr *addr, socklen_t alen, int qlen);
+
+
 
 #endif /* INCLUDE_APUE_H_ */

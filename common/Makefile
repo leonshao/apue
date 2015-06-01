@@ -1,6 +1,10 @@
 OBJ_PATH = ../obj
 
-OBJS = err.o lock.o readn_writen.o socket.o
+OBJS = err.o \
+	   lock.o \
+	   readn_writen.o \
+	   socket.o \
+	   daemonize.o
 
 all: $(OBJS)
 
