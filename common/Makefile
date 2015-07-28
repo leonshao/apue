@@ -4,7 +4,8 @@ OBJS = err.o \
 	   lock.o \
 	   readn_writen.o \
 	   socket.o \
-	   daemonize.o
+	   daemonize.o \
+	   socket_un.o
 
 all: $(OBJS)
 
@@ -13,4 +14,4 @@ $(OBJS): %.o: %.c
 
 .PHONY: clean
 clean:
-	-rm -f *.o
+	-rm -f $(OBJ_PATH)/*.o
