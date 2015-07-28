@@ -72,9 +72,11 @@ int serv_accept(int listenfd, uid_t *uidptr) {
 		err_msg("accept error");
 		return -1;
 	}
+
 	/* obtain the client's uid from its calling address */
 	len -= offsetof(struct sockaddr_un, sun_path); /* len of pathname */
 	un.sun_path[len] = 0;
+	printf("get connection from %s\n", un.sun_path);
 
 	if(stat(un.sun_path, &statbuf) < 0) {
 		err_msg("stat error");

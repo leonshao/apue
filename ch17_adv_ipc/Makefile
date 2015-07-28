@@ -1,17 +1,13 @@
 BIN_PATH = bin
 OBJ_PATH = ../obj
 
-OBJ = ../obj/lock.o \
-      ../obj/file_io.o \
-      ../obj/err.o \
-      ../obj/open_max.o \
-      ../obj/my_popen.o \
-      ../obj/proc_sync.o \
-      ../obj/socket.o \
-      ../obj/daemonize.o
+OBJ = ../obj/err.o \
+	  ../obj/socket_un.o
 
 # add APPs for different application
-APP = bind_un 
+APP = bind_un \
+	  server_un \
+	  client_un
 
 # needs all, otherwise only one APP is generated
 all: $(APP)
