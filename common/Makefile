@@ -5,7 +5,10 @@ OBJS = err.o \
 	   readn_writen.o \
 	   socket.o \
 	   daemonize.o \
-	   socket_un.o
+	   socket_un.o \
+	   send_fd.o \
+	   send_err.o \
+	   recv_fd.o
 
 all: $(OBJS)
 

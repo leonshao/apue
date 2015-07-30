@@ -12,12 +12,23 @@
 static void err_doit(int, int, const char *, va_list);
 
 /*
+ * Nonfatal error related to a system call.
+ * Print a message and return
+ */
+void err_ret(const char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	err_doit(1, errno, fmt, ap);
+	va_end(ap);
+}
+
+/*
  * Fatal error related to a system call.
  * Print a message and terminate.
  */
-void err_sys(const char *fmt, ...)
-{
-	va_list		ap;
+void err_sys(const char *fmt, ...) {
+	va_list ap;
 
 	va_start(ap, fmt);
 	err_doit(1, errno, fmt, ap);
@@ -29,9 +40,8 @@ void err_sys(const char *fmt, ...)
  * Nonfatal error unrelated to a system call
  * Print a message and return.
  */
-void err_msg(const char *fmt, ...)
-{
-	va_list		ap;
+void err_msg(const char *fmt, ...) {
+	va_list ap;
 
 	va_start(ap, fmt);
 	err_doit(0, 0, fmt, ap);
@@ -42,9 +52,8 @@ void err_msg(const char *fmt, ...)
  * Fatal error unrelated to a system call.
  * Print a message and terminate.
  */
-void err_quit(const char *fmt, ...)
-{
-	va_list		ap;
+void err_quit(const char *fmt, ...) {
+	va_list ap;
 
 	va_start(ap, fmt);
 	err_doit(0, 0, fmt, ap);
@@ -53,23 +62,36 @@ void err_quit(const char *fmt, ...)
 }
 
 /*
+ * Fatal error related to a system call.
+ * Print a message, dump core, and terminate.
+ */
+void err_dump(const char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	err_doit(0, 0, fmt, ap);
+	va_end(ap);
+	abort();	/* dump core and terminate */
+}
+
+
+/*
  * Print a message and return to caller.
  * Caller specifies "errnoflag", which decides if to
  * print the error message of errno
  */
-static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
-{
+static void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
 	char buf[MAXLINE];
 	size_t len;
 
 	vsnprintf(buf, MAXLINE, fmt, ap);
 	len = strlen(buf);
 
-	if(errnoflag)
+	if (errnoflag)
 		snprintf(buf + len, MAXLINE - len, ": %s", strerror(error));
 
 	strcat(buf, "\n");
-	fflush(stdout);		/* in case stdout and stderr are the same */
+	fflush(stdout); /* in case stdout and stderr are the same */
 	fputs(buf, stderr);
-	fflush(NULL);		/* flushes all the stdio output streams */
+	fflush(NULL); /* flushes all the stdio output streams */
 }
