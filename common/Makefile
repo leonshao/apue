@@ -1,20 +1,21 @@
-OBJ_PATH = ../obj
+SOURCE = $(wildcard *.c)				# 1. get all .c source files 
 
-OBJS = err.o \
-	   lock.o \
-	   readn_writen.o \
-	   socket.o \
-	   daemonize.o \
-	   socket_un.o \
-	   send_fd.o \
-	   send_err.o \
-	   recv_fd.o
+OBJS = $(patsubst %.c,%.o,$(SOURCE))	# 2. replace .c with .o by patsubst
 
-all: $(OBJS)
+LIB = libapue.a
+LIB_PATH = ../lib
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	ar rcs $@ $^
+	cp $(LIB) $(LIB_PATH)
+	rm -f *.o *.a
 
 $(OBJS): %.o: %.c
-	gcc -Wall -g -c -I../include $< -o $(OBJ_PATH)/$@
+	gcc -Wall -g -c -I../include $< -o $@
+
 
 .PHONY: clean
 clean:
-	-rm -f $(OBJ_PATH)/*.o
+	-rm -f *.o *.a

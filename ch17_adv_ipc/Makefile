@@ -1,19 +1,15 @@
+SOURCE = $(wildcard *.c)
+BINS = $(patsubst %.c,%,$(SOURCE))
+
 BIN_PATH = bin
-OBJ_PATH = ../obj
-
-OBJ = ../obj/err.o \
-	  ../obj/socket_un.o
-
-# add APPs for different application
-APP = bind_un \
-	  server_un \
-	  client_un
+LIB_PATH = -L../lib
+LIB	= -lapue
 
 # needs all, otherwise only one APP is generated
-all: $(APP)
+all: $(BINS)
 
-$(APP):%:%.c
-	gcc -Wall -g -o $(BIN_PATH)/$@ -I../include $< $(OBJ)
+$(BINS):%:%.c
+	gcc -Wall -g -o $(BIN_PATH)/$@ -I../include $< $(LIB_PATH) $(LIB)
 
 
 .PHONY: clean
