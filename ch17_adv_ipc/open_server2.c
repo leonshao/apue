@@ -8,6 +8,7 @@
 #include "apue.h"
 #include <sys/time.h>
 #include <sys/select.h>
+#include <poll.h>
 
 int 	debug, log_to_stderr;
 char	errmsg[MAXLINE];
@@ -15,6 +16,7 @@ int		oflag;
 char	*pathname;
 
 void loop(void);
+void loop_poll(void);
 
 int main(int argc, char *argv[]) {
 	int		c;
@@ -35,7 +37,7 @@ int main(int argc, char *argv[]) {
 //	if(debug == 0)
 //		daemonize("opend");
 
-	loop();
+	loop_poll();
 
 	return 0;	/* should never returns */
 }
@@ -68,7 +70,7 @@ static void client_alloc(void) {
 		client[i].fd = -1;	/* fd of -1 means entry available */
 
 	client_size += NALLOC;
-	err_msg("client array full or empty, new size: %d", NEWNALLOC);
+	err_msg("client array full or empty, new size: %d", client_size);
 }
 
 /*
@@ -147,7 +149,6 @@ void loop(void) {
 
 			err_msg("new connection: uid %d, fd %d, maxi %d",
 					uid, clifd, maxi);
-			continue;
 		}
 
 		for(i = 0; i <= maxi; ++i) {	/* go through client[] array */
@@ -169,3 +170,66 @@ void loop(void) {
 		}
 	}
 }
+
+void loop_poll(void) {
+	struct pollfd	*pollfd;
+	int				listenfd, maxi, clifd, i, nread;
+	uid_t			uid;
+	char			buf[MAXLINE];
+
+	if((pollfd = malloc(open_max() * sizeof(struct pollfd))) == NULL)
+		err_sys("malloc error");
+
+	/* obtain fd to listen fro client request on */
+	if((listenfd = serv_listen(CS_OPEN)) < 0)
+		err_sys("serv_listen error");
+
+	client_add(listenfd, 0);	/* we use [0] for listenfd */
+	pollfd[0].fd 		= listenfd;
+	pollfd[0].events 	= POLLIN;	/* the interesting event types */
+	maxi = 0;
+
+	for( ; ; ) {
+		if(poll(pollfd, maxi + 1, -1) < 0)
+			err_sys("poll error");
+
+		if(pollfd[0].revents & POLLIN) {
+			/* accept new client request */
+			if((clifd = serv_accept(listenfd, &uid)) < 0)
+				err_sys("serv_accept error");
+
+			i = client_add(clifd, uid);
+			pollfd[i].fd 		= clifd;
+			pollfd[i].events	= POLLIN;
+
+			if(i > maxi)
+				maxi = i;
+
+			err_msg("new connection: uid %d, fd %d, maxi %d",
+					uid, clifd, maxi);
+		}
+
+		/* starts from [1] for [0] is used for listenfd */
+		for(i = 1; i<= maxi; ++i) {
+			if((clifd = client[i].fd) < 0)
+				continue;
+
+			if(pollfd[i].revents & POLLHUP) {
+				goto hungup;
+			} else if (pollfd[i].revents & POLLIN) {
+				/* read argument buffer from client */
+				if((nread = read(clifd, buf, MAXLINE)) < 0) {
+					err_sys("read error on fd %d", clifd);
+				} else if(nread == 0) {
+hungup:
+					err_msg("closed: uid %d, fd %d", client[i].uid, clifd);
+					client_del(clifd);	/* client has closed conn */
+					pollfd[i].fd = -1;
+					close(clifd);
+				} else	/* process client's request */
+					request(buf, nread, clifd);
+			}
+		}
+	}
+}
+
