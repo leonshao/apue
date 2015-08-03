@@ -44,6 +44,10 @@ void request(char *buf, int nread, int fd) {
 
 #define MAXARGC		50		/* max number of arguments in buf */
 #define WHITE		" \t\n"	/* white space for tokenizing arguments */
+#define ARGC		10
+
+char	**argv = NULL;
+int		arg_size = 0;
 /*
  * buf[] contains white-space-seperated arguments. We covert it to an
  * argv-style array of pointers, and call the user's function (optfunc)
@@ -52,15 +56,30 @@ void request(char *buf, int nread, int fd) {
  * array is  modified (nulls placed after each token).
  */
 int buf_args(char *buf, int (*optfunc)(int, char**)) {
-	char	*ptr, *argv[MAXARGC];
-	int 	argc;
+	char	*ptr;
+	int 	argc, ret;
+
+	/* initialize argv to store ARGC args */
+	if(argv == NULL) {
+		argv = malloc(ARGC * sizeof(char *));
+		if(argv == NULL)
+			err_sys("malloc error");
+		arg_size = ARGC;
+		err_msg("allocate %d pointers for argv", arg_size);
+	}
 
 	if(strtok(buf, WHITE) == NULL)	/* an argv[0] is required */
 		return -1;
 	argv[argc = 0] = buf;
 	while((ptr = strtok(NULL, WHITE)) != NULL) {
-		if(++argc >= MAXARGC - 1)	/* - 1 for room for NULL at end */
-			return -1;
+		if(++argc >= arg_size - 1) {	/* - 1 for room for NULL at end */
+			/* argv is full, realloc for more */
+			argv = realloc(argv, arg_size + ARGC);
+			if(argv == NULL)
+				err_sys("realloc error");
+			arg_size += ARGC;
+			err_msg("argv is full, new size: %d", arg_size);
+		}
 		argv[argc] = ptr;
 	}
 
@@ -71,7 +90,8 @@ int buf_args(char *buf, int (*optfunc)(int, char**)) {
 	 * user's function can just copy the pointers, even
 	 * though argv[] array will disappear on return.
 	 */
-	return (*optfunc)(argc, argv);
+	ret = (*optfunc)(argc, argv);
+	return ret;
 }
 
 /*

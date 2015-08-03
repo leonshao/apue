@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	return 0;	/* should never returns */
 }
 
-#define NALLOC	10	/* # client structs to alloc/realloc for */
+#define NALLOC	open_max()	/* # client structs to alloc/realloc for */
 #define NEWNALLOC	(client_size + NALLOC)
 
 typedef struct {	/* one Client struct per connected client */
@@ -60,8 +60,6 @@ static void client_alloc(void) {
 
 	if(client == NULL)
 		client = malloc(NALLOC * sizeof(Client));
-	else
-		client = realloc(client, NEWNALLOC * sizeof(Client));
 	if(client == NULL)
 		err_sys("can't alloc for client array");
 
@@ -77,23 +75,16 @@ static void client_alloc(void) {
  * Called by loop() when connection request from a new client arrives.
  */
 int client_add(int fd, uid_t uid) {
-	int		i;
-
 	if (client == NULL)		/* first time we're called */
 		client_alloc();
 
-again:
-	for(i = 0; i < client_size; ++i) {
-		if(client[i].fd == -1) {
-			client[i].fd 	= fd;
-			client[i].uid 	= uid;
-			return i;	/* return index in client[] array */
-		}
-	}
+	if(client[fd].fd != -1)
+		err_sys("duplicate fd");
 
-	/* client array full, time to realloc for more */
-	client_alloc();
-	goto again;
+	client[fd].fd 	= fd;
+	client[fd].uid 	= uid;
+
+	return fd;
 }
 
 /*
@@ -198,12 +189,10 @@ void loop_poll(void) {
 			if((clifd = serv_accept(listenfd, &uid)) < 0)
 				err_sys("serv_accept error");
 
-			i = client_add(clifd, uid);
-			pollfd[i].fd 		= clifd;
-			pollfd[i].events	= POLLIN;
-
-			if(i > maxi)
-				maxi = i;
+			client_add(clifd, uid);
+			++maxi;
+			pollfd[maxi].fd 	= clifd;
+			pollfd[maxi].events	= POLLIN;
 
 			err_msg("new connection: uid %d, fd %d, maxi %d",
 					uid, clifd, maxi);
@@ -211,9 +200,6 @@ void loop_poll(void) {
 
 		/* starts from [1] for [0] is used for listenfd */
 		for(i = 1; i<= maxi; ++i) {
-			if((clifd = client[i].fd) < 0)
-				continue;
-
 			if(pollfd[i].revents & POLLHUP) {
 				goto hungup;
 			} else if (pollfd[i].revents & POLLIN) {
@@ -225,6 +211,8 @@ hungup:
 					err_msg("closed: uid %d, fd %d", client[i].uid, clifd);
 					client_del(clifd);	/* client has closed conn */
 					pollfd[i].fd = -1;
+					if(i == maxi)
+						--maxi;
 					close(clifd);
 				} else	/* process client's request */
 					request(buf, nread, clifd);
