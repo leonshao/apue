@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <poll.h>
+#include <sys/epoll.h>
 
 int 	debug, log_to_stderr;
 char	errmsg[MAXLINE];
@@ -17,6 +18,7 @@ char	*pathname;
 
 void loop(void);
 void loop_poll(void);
+void loop_epoll(void);
 
 int main(int argc, char *argv[]) {
 	int		c;
@@ -36,8 +38,11 @@ int main(int argc, char *argv[]) {
 
 //	if(debug == 0)
 //		daemonize("opend");
-
+#ifdef _SYS_EPOLL_H
+	loop_epoll();
+#else
 	loop_poll();
+#endif
 
 	return 0;	/* should never returns */
 }
@@ -91,19 +96,10 @@ int client_add(int fd, uid_t uid) {
  * Called by loop() when we're done with a client.
  */
 void client_del(int fd) {
-	int		i;
-
 	if(client == NULL)
 		return;
 
-	for(i = 0; i < client_size; ++i) {
-		if(client[i].fd == fd) {
-			client[i].fd = -1;
-			return;
-		}
-	}
-
-	err_quit("can't find client entry for fd %d", fd);
+	client[fd].fd = -1;
 }
 
 void loop(void) {
@@ -200,6 +196,9 @@ void loop_poll(void) {
 
 		/* starts from [1] for [0] is used for listenfd */
 		for(i = 1; i<= maxi; ++i) {
+			if((clifd = pollfd[i].fd) < 0)
+				continue;
+
 			if(pollfd[i].revents & POLLHUP) {
 				goto hungup;
 			} else if (pollfd[i].revents & POLLIN) {
@@ -208,7 +207,7 @@ void loop_poll(void) {
 					err_sys("read error on fd %d", clifd);
 				} else if(nread == 0) {
 hungup:
-					err_msg("closed: uid %d, fd %d", client[i].uid, clifd);
+					err_msg("closed: uid %d, fd %d", client[clifd].uid, clifd);
 					client_del(clifd);	/* client has closed conn */
 					pollfd[i].fd = -1;
 					if(i == maxi)
@@ -216,6 +215,68 @@ hungup:
 					close(clifd);
 				} else	/* process client's request */
 					request(buf, nread, clifd);
+			}
+		}
+	}
+}
+
+void loop_epoll(void) {
+	int					listenfd, epfd, n, i, fd, clifd, nread;
+	int					maxnum = open_max();
+	struct epoll_event	event, *eventsp;
+	uint32_t			events;
+	uid_t				uid;
+	char				buf[MAXLINE];
+
+	if((epfd = epoll_create(maxnum)) < 0)
+		err_sys("epoll_create error");
+
+	if((eventsp = calloc(maxnum, sizeof(struct epoll_event))) == NULL)
+		err_sys("calloc error");
+
+	/* obtain fd to listen fro client request on */
+	if((listenfd = serv_listen(CS_OPEN)) < 0)
+		err_sys("serv_listen error");
+
+	client_add(listenfd, 0);	/* we use [0] for listenfd */
+	event.events 	= EPOLLIN;	/* the interesting event types */
+	event.data.fd	= listenfd;
+	epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &event);
+
+	for( ; ; ) {
+		if((n = epoll_wait(epfd, eventsp, maxnum, -1)) < 0)
+			err_sys("epoll_wait");
+
+		for (i = 0; i < n; ++i) {
+			fd 		= eventsp[i].data.fd;
+			events	= eventsp[i].events;
+
+			if (events & EPOLLIN) {
+				if (fd == listenfd) {
+					/* accept new client request */
+					if ((clifd = serv_accept(listenfd, &uid)) < 0)
+						err_sys("serv_accept error");
+
+					client_add(clifd, uid);
+					event.events = EPOLLIN;
+					event.data.fd = clifd;
+					epoll_ctl(epfd, EPOLL_CTL_ADD, clifd, &event);
+				}
+				else {
+					/* read argument buffer from client */
+					if((nread = read(fd, buf, MAXLINE)) < 0) {
+						err_sys("read error on fd %d", fd);
+					} else if(nread == 0) {
+						goto hungup;
+					} else	/* process client's request */
+						request(buf, nread, fd);
+				}
+			} else if(events & (EPOLLHUP | EPOLLERR)) {
+hungup:
+				/* close fd only if EPOLLIN was not set */
+				err_msg("closed: uid %d, fd %d", client[fd].uid, fd);
+				client_del(fd);	/* client has closed conn */
+				close(fd);
 			}
 		}
 	}
