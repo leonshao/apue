@@ -19,6 +19,9 @@ struct queue {
 	struct job			*q_head;
 	struct job			*q_tail;
 	pthread_rwlock_t	q_lock;
+
+	pthread_cond_t		q_cond_lock;
+	pthread_mutex_t		q_mutex_lock;
 };
 
 /*
@@ -29,7 +32,16 @@ int queue_init(struct queue *qp) {
 
 	qp->q_head = NULL;
 	qp->q_tail = NULL;
+
 	err = pthread_rwlock_init(&qp->q_lock, NULL);
+	if (err != 0)
+		return err;
+
+	err = pthread_cond_init(&qp->q_cond_lock, NULL);
+	if (err != 0)
+		return err;
+
+	err = pthread_mutex_init(&qp->q_mutex_lock, NULL);
 	if (err != 0)
 		return err;
 
@@ -42,7 +54,7 @@ int queue_init(struct queue *qp) {
  * Returns if the queue is empty
  */
 int queue_is_empty(struct queue *qp) {
-	return qp->q_head == qp->q_tail;
+	return qp->q_head == NULL;
 }
 
 /*
@@ -60,6 +72,11 @@ void job_insert(struct queue *qp, struct job *jp) {
 
 	qp->q_head = jp;
 	pthread_rwlock_unlock(&qp->q_lock);
+
+	/*
+	 * wake up all threads
+	 */
+	pthread_cond_broadcast(&qp->q_cond_lock);
 }
 
 /*
@@ -77,6 +94,7 @@ void job_append(struct queue *qp, struct job *jp) {
 
 	qp->q_tail = jp;
 	pthread_rwlock_unlock(&qp->q_lock);
+	pthread_cond_broadcast(&qp->q_cond_lock);
 }
 
 /*
@@ -129,8 +147,8 @@ struct job *job_find(struct queue *qp, pthread_t id) {
 	return jp;
 }
 
-#define	NJOBS		100		/* total jobs */
-#define NTHREADS	3		/* total threads */
+#define	NJOBS		20		/* total jobs */
+#define NTHREADS	100		/* total threads */
 
 struct queue	gq;			/* global queue object */
 pthread_t		thdarr[NTHREADS];
@@ -143,13 +161,27 @@ void *thr_fn(void *arg) {
 	pthread_t	tid = pthread_self();
 
 	for ( ; ; ) {
+		/*
+		 * Add condition lock instead of sleep.
+		 * However, even one job inserted, producer wakes up
+		 * all threads. When the queue is not NULL, everyone
+		 * try to find its job although there is only one job
+		 * in the queue. It waits time and resource for most
+		 * threads on the procedure calls and "can't find job".
+		 */
+		pthread_mutex_lock(&gq.q_mutex_lock);
+		while(gq.q_head == NULL) {
+			pthread_cond_wait(&gq.q_cond_lock, &gq.q_mutex_lock);
+			printf("thread %ld wakes up\n", tid);
+		}
+		pthread_mutex_unlock(&gq.q_mutex_lock);
+
 		if((jp = job_find(&gq, tid)) != NULL) {
 			job_remove(&gq, jp);
 			printf("thread %ld gets job\n", tid);
 			free(jp);
-		}
-
-		sleep(1);
+		} else
+			printf("thread %ld can't find job\n", tid);
 	}
 
 	return (void *)0;
@@ -171,6 +203,7 @@ int main(void) {
 		printf("new thread %ld\n", tid);
 	}
 
+	sleep(1);
 	/*
 	 * producer
 	 */
@@ -181,14 +214,9 @@ int main(void) {
 			idx = i % NTHREADS;	/* get thread tid */
 			jp->j_id = thdarr[idx];
 
-			if(idx % 2) {
-				job_insert(&gq, jp);
-			} else
-				job_append(&gq, jp);
+			job_insert(&gq, jp);
 
 			printf("job id %ld created\n", jp->j_id);
-			if(i % 5 == 0)
-				sleep(1);
 		}
 	}
 
