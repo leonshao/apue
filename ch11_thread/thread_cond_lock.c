@@ -24,8 +24,10 @@ void process_msg(void) {
 
 	for( ; ; ) {
 		pthread_mutex_lock(&qlock);
-		while(workq == NULL)
+		while(workq == NULL) {
 			pthread_cond_wait(&qready, &qlock);
+			printf("thread %ld wakes up\n", tid);
+		}
 
 		/* get and remove message from workq */
 		mp = workq;
@@ -44,7 +46,7 @@ void enqueue_msg(struct msg *mp) {
 	printf("msg %d enqueued\n", mp->id);
 	pthread_mutex_unlock(&qlock);
 //	pthread_cond_signal(&qready);
-	pthread_cond_broadcast(&qready);
+//	pthread_cond_broadcast(&qready);
 }
 
 #define NMSGS		20		/* total messages */
@@ -75,12 +77,14 @@ int main(void) {
 			mp->id = i;
 
 			enqueue_msg(mp);
-			if(i % 5 == 0)
-				sleep(1);
+
 		}
 	}
+//	pthread_cond_signal(&qready);
+	pthread_cond_broadcast(&qready);
 
-	while(workq != NULL)
+//	while(workq != NULL)
+	while(1)
 		sleep(1);
 
 	return 0;

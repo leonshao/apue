@@ -74,6 +74,14 @@ void err_dump(const char *fmt, ...) {
 	abort();	/* dump core and terminate */
 }
 
+/*
+ * Fatal error unrelated to a system call.
+ * Error code passed as explict parameter.
+ * Print amessage and terminate
+ */
+void err_exit(int error, const char *fmt, ...) {
+
+}
 
 /*
  * Print a message and return to caller.

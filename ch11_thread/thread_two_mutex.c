@@ -173,8 +173,8 @@ int foo_rele(struct foo *fp) {
 }
 
 
-#define	NOBJS	10
-#define THREADNUM 	100
+#define	NOBJS	100
+#define THREADNUM 	1000
 
 pthread_t	thdarr[THREADNUM];
 

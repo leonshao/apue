@@ -22,10 +22,19 @@ void printfoo(const char *s, const struct foo *fp) {
 }
 
 void *thr_fn1(void *arg) {
-	struct foo	foo = {1, 2, 3, 4};
+//	struct foo	foo = {1, 2, 3, 4};
+	struct foo	*fp;
 
-	printfoo("thread 1: \n", &foo);
-	pthread_exit((void *)&foo);
+	if((fp = malloc(sizeof(struct foo))) == NULL)
+		err_sys("malloc error");
+
+	fp->a = 1;
+	fp->b = 2;
+	fp->c = 3;
+	fp->d = 4;
+
+	printfoo("thread 1: \n", fp);
+	pthread_exit((void *)fp);
 }
 
 void *thr_fn2(void *arg) {
@@ -60,6 +69,9 @@ int main(void) {
 
 	sleep(1);
 	printfoo("parent:\n", fp);
+
+	/* fp is allocated in thread, remember to free */
+	free(fp);
 
 	return 0;
 }
