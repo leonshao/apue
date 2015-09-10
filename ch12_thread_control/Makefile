@@ -1,5 +1,5 @@
 SOURCE = $(wildcard *.c)
-BINS = $(patsubst %.c,%,$(SOURCE))
+BINS = $(patsubst %.c, %, $(SOURCE))
 
 BIN_PATH = bin
 LIB_PATH = -L../lib
