@@ -95,7 +95,7 @@ int serv_accept(int listenfd, uid_t *uidptr);
 int cli_conn(const char *name);
 
 /*
- * size of control buffer to send/recv one file descriptor
+ * Size of control buffer to send/recv one file descriptor
  * CMSG_ALIGN is required for CMSG_LEN just count total
  * bytes of struct cmsghdr with data
  */
@@ -118,7 +118,7 @@ void request(char *buf, int nread, int fd);
 long open_max(void);
 
 /*
- * network part
+ * Network part
  */
 /*
  * HOST_NAME_MAX is always defined in bits/local_lim.h
@@ -135,8 +135,13 @@ void init_addrinfo(struct addrinfo *hint, int socktype);
 int init_server(int type, const struct sockaddr *addr, socklen_t alen, int qlen);
 
 /*
- * thread part
+ * Thread part
  */
 int makethread(void *(fn)(void *), void *arg);
+
+/*
+ * Signal part
+ */
+void pr_mask(const char *str);
 
 #endif /* INCLUDE_APUE_H_ */
