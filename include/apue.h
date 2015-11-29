@@ -70,6 +70,11 @@ pid_t lock_test(int fd, int type, off_t offset, int whence, off_t len);
 int lockfile(int fd);
 
 /*
+ * Process part
+ */
+void pr_exit(int status);
+
+/*
  * Process sync part
  */
 void TELL_WAIT(void);
