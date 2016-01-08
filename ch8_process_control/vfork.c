@@ -10,7 +10,7 @@
 int		glob = 6;		/* external variable in initialized data */
 
 int main(void) {
-	int		var;		/* automatic variable on the stack */
+	int		var, n;		/* automatic variable on the stack */
 	pid_t	pid;
 
 	var = 88;
@@ -20,12 +20,19 @@ int main(void) {
 	else if (pid == 0) {	/* child */
 		glob++;				/* modify parent's variables */
 		var++;
+//		fflush(stdout);
+//		close(STDOUT_FILENO);
 		_exit(0);			/* child terminates */
+//		exit(0);
 	}
 
+	sleep(1);
+//	fflush(stdout);
+//	close(STDOUT_FILENO);
 	/*
 	 * Parent continues here
 	 */
-	printf("pid = %d, glob = %d, var = %d\n", getpid(), glob, var);
+	n = printf("pid = %d, glob = %d, var = %d\n", getpid(), glob, var);
+	printf("n = %d\n", n);
 	return 0;
 }
