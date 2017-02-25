@@ -1,12 +1,17 @@
-OBJ_PATH = ../obj
+SOURCE = $(wildcard *.c)
+BINS = $(patsubst %.c,%,$(SOURCE))
 
-OBJS = file_io.o
+BIN_PATH = bin
+LIB_PATH = -L../lib
+LIB	= -lapue -lpthread
 
-all: $(OBJS)
+# needs all, otherwise only one APP is generated
+all: $(BINS)
 
-$(OBJS): %.o: %.c
-	gcc -Wall -g -c -I../include $< -o $(OBJ_PATH)/$@
+$(BINS):%:%.c
+	gcc -Wall -g -o $(BIN_PATH)/$@ -I../include $< $(LIB_PATH) $(LIB)
+
 
 .PHONY: clean
 clean:
-	-rm -f *.o
+	-rm -f $(BIN_PATH)/*
